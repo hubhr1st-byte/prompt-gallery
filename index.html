@@ -258,6 +258,11 @@ function heuristic(sit, pr){
   const hasAnalysis = /분석|추세|증감|추이|비율|원인|패턴|인사이트/.test(pr);
   const hasIdeas = /아이디어|브레인스토밍|발상|아이디에이션/.test(pr);
   const hasExplain = /쉽게|풀어서|초보|비전문가|눈높이|이해하기/.test(pr);
+  const hasSchedule = /일정\s*조율|일정\s*잡|회의\s*잡|미팅\s*잡|약속\s*잡|스케줄|시간\s*조율|가능한\s*시간|미팅\s*시간|회의\s*시간/.test(pr);
+  const hasMinutes = /회의록|회의\s*메모|미팅\s*노트|논의\s*내용|회의\s*내용/.test(pr);
+  const hasCalendar = /캘린더|달력|일정표/.test(pr);
+  const hasCode = /코드|코딩|엑셀|수식|함수|매크로|파이썬|자바스크립트|자바|sql|vlookup|피벗|스프레드시트|디버그/i.test(pr);
+  const hasResearch = /리서치|조사|검색|자료\s*조사|시장\s*조사|동향|벤치마|출처|레퍼런스/.test(pr);
   let key, before, after, tip;
   if(hasEmail){
     key="받는 사람·목적·요청을 먼저 지정해 바로 보낼 수 있는 메일을 만든다";
@@ -295,6 +300,26 @@ function heuristic(sit, pr){
     key="독자 수준을 지정해 어려운 내용을 눈높이에 맞게 풀어준다";
     before="전문 용어가 많아 이해가 어려움"; after="비전문가도 이해할 수 있게 풀어서 설명됨";
     tip="독자(신입·고객 등)와 원하는 길이를 함께 지정해보세요";
+  } else if(hasSchedule){
+    key="참석자·목적·소요시간을 정해 바로 잡을 수 있는 일정안을 만든다";
+    before="여러 명 시간 맞추느라 메일이 오감"; after="후보 시간과 안내 문구까지 한 번에 정리됨";
+    tip="참석자·소요시간·가능한 시간대를 함께 알려주세요";
+  } else if(hasMinutes){
+    key="결정·담당·기한 항목을 지정해 회의 메모를 실행 가능한 회의록으로 만든다";
+    before="줄글 메모라 결정·할 일이 묻힘"; after="결정·담당·기한이 표로 또렷이 정리됨";
+    tip="‘결정 / 담당 / 기한 / 다음 할 일’ 항목을 지정해보세요";
+  } else if(hasCalendar){
+    key="기간·우선순위를 줘 흩어진 일정을 한눈에 보이는 형태로 정리한다";
+    before="일정이 흩어져 우선순위가 안 보임"; after="기간·우선순위별로 정돈된 일정표로";
+    tip="기간(주·월)과 우선순위 기준을 함께 지정해보세요";
+  } else if(hasCode){
+    key="원하는 결과와 입력 형태를 지정해 바로 쓰는 수식·코드를 만든다";
+    before="어떤 함수·문법을 쓸지 막막함"; after="동작하는 수식·코드와 설명이 한 번에";
+    tip="입력 형태와 원하는 결과(예시 값)를 함께 적어주세요";
+  } else if(hasResearch){
+    key="조사 범위와 정리 틀을 먼저 줘 흩어진 정보를 의사결정용으로 모은다";
+    before="정보는 많은데 출처·정리가 안 됨"; after="출처와 함께 핵심이 한눈에 정리됨";
+    tip="조사 범위·기간과 ‘현황 / 시사점’ 같은 정리 틀을 지정해보세요";
   } else if(hasTable){
     key="출력을 표로 못 박아 항목 누락을 막는다";
     before="줄글로 받아 항목이 빠지기 쉬움"; after="표로 빠짐없이 정리됨";
