@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<title>프롬프트 갤러리</title>
+<title>PROMPT GALLERY</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <style>
   :root{
@@ -45,7 +45,7 @@
   .chip.on{background:var(--orange-soft);color:var(--orange-deep);border-color:#F3CFC0;font-weight:700}
   .chip.allon{background:var(--ink);color:#fff;border-color:var(--ink)}
 
-  .card{background:#fff;border:1px solid #EFEDE9;border-radius:22px;padding:20px;box-shadow:0 16px 34px -14px rgba(250,75,30,.18),0 2px 6px rgba(22,19,15,.04);margin-bottom:14px;cursor:pointer}
+  .card{background:#fff;border:1px solid #EFEDE9;border-radius:22px;padding:20px;box-shadow:0 10px 26px -12px rgba(22,19,15,0.13),0 2px 6px rgba(22,19,15,0.05);margin-bottom:14px;cursor:pointer}
   .crow{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
   .cat{font-size:12px;font-weight:700;padding:6px 11px;border-radius:999px;background:var(--orange-soft);color:var(--orange-deep)}
   .cat.gray{background:var(--gray2);color:var(--ink)}
@@ -97,7 +97,7 @@
   .tab.on{background:var(--ink);color:#fff;font-weight:700}
 
   .bestcard{background:#fff;border:1px solid var(--gray);border-radius:18px;padding:16px 18px;display:flex;gap:16px;align-items:flex-start;margin-bottom:12px;cursor:pointer}
-  .bestcard.top{box-shadow:0 16px 34px -14px rgba(250,75,30,.18),0 2px 6px rgba(22,19,15,.04)}
+  .bestcard.top{box-shadow:0 10px 26px -12px rgba(22,19,15,0.13),0 2px 6px rgba(22,19,15,0.05)}
   .rank{font-weight:200;font-size:42px;line-height:.85;font-variant-numeric:tabular-nums;flex:none;width:34px}
   .rank.one{color:var(--orange)}.rank.other{color:#C9C4BD}
   .btitlerow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:5px}
@@ -106,8 +106,8 @@
   .bkey{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .footnote{font-size:11px;color:#B9B4AC;text-align:center;margin:6px 0 2px}
   .empty{border:1px dashed var(--line);border-radius:18px;padding:48px 20px;text-align:center;color:var(--muted);font-size:13px;margin-top:6px}
-  .profilecard{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #EFEDE9;border-radius:22px;padding:18px 20px;box-shadow:0 16px 34px -14px rgba(250,75,30,.14),0 2px 6px rgba(22,19,15,.04);margin-top:18px}
-  .avatar{width:52px;height:52px;border-radius:50%;background:var(--orange-soft);color:var(--orange-deep);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px;flex:none}
+  .profilecard{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #EFEDE9;border-radius:22px;padding:18px 20px;box-shadow:0 10px 26px -12px rgba(22,19,15,0.13),0 2px 6px rgba(22,19,15,0.05);margin-top:18px}
+  .avatar{width:52px;height:52px;border-radius:50%;background:var(--orange-soft);color:#8E8A85;display:flex;align-items:center;justify-content:center;flex:none}
   .pname{font-weight:800;font-size:18px;letter-spacing:-.02em}
   .pbio{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
   .pstats{font-size:11px;color:#B9B4AC;margin-top:7px}
@@ -490,7 +490,7 @@ function myHTML(){
   const likedCards = state.liked.map(id=>state.cards.find(c=>c.id===id)).filter(Boolean);
   let html = appname()+'<h2 class="h2" style="margin-top:18px">MY</h2>'+
     '<div class="profilecard">'+
-      '<div class="avatar">'+esc(initials(p.name))+'</div>'+
+      '<div class="avatar"><svg viewBox="0 0 24 24" width="36" height="36" fill="currentColor" aria-hidden="true"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>'+
       '<div style="flex:1;min-width:0"><div class="pname">'+esc(p.name)+'</div>'+
         '<div class="pbio">'+esc(p.bio)+'</div>'+
         '<div class="pstats">올린 프롬프트 '+mineCards.length+' · 좋아요 '+state.liked.length+'</div></div>'+
@@ -569,7 +569,7 @@ window.delCard = async function(id){
 };
 
 function appname(){
-  return '<div class="approw"><span class="appname">프롬프트 갤러리</span>'+
+  return '<div class="approw"><span class="appname">PROMPT GALLERY</span>'+
     '<button class="refresh" onclick="refresh()" aria-label="새로고침">↻</button></div>';
 }
 
@@ -584,7 +584,7 @@ function loadingHTML(){
     statusbar(true)+
     '<div class="splashc">'+
       '<svg width="142" viewBox="0 0 257 63" style="animation:floaty 3.4s ease-in-out infinite"><polygon points="150,0 257,0 241,31 131,31" fill="#fd5108"/><polygon points="18,32 128,32 110,63 0,63" fill="#fd5108"/></svg>'+
-      '<div class="stitle">프롬프트<br>갤러리</div>'+
+      '<div class="stitle">PROMPT<br>GALLERY</div>'+
     '</div>'+
     '<div class="loader"><div class="lbar"><i id="lbar"></i></div>'+
       '<div class="lrow"><span class="l">디자인 토큰 불러오는 중…</span><span class="pct" id="lpct">0<b>%</b></span></div>'+
