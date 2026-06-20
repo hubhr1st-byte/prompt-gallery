@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>프롬프트 갤러리</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  :root{
+    --orange:#FA4B1E; --orange-deep:#D83A12; --orange-soft:#FCE3D8;
+    --ink:#16130F; --muted:#8E8A85; --gray:#EAE8E5; --gray2:#F2F0ED;
+    --line:#E6E3DE; --key-bg:#FBE6C8;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+  ::selection{background:var(--orange);color:#fff}
+  @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  @keyframes popin{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
+  @keyframes pop{0%{transform:scale(1)}30%{transform:scale(1.45)}55%{transform:scale(.9)}80%{transform:scale(1.08)}100%{transform:scale(1)}}
+
+  .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#E4DFD7;padding:24px}
+  .phone{background:var(--ink);border-radius:54px;padding:8px;box-shadow:0 32px 64px -22px rgba(22,19,15,.45),0 8px 22px rgba(22,19,15,.14)}
+  .screen{position:relative;width:368px;height:788px;max-width:calc(100vw - 48px);max-height:calc(100vh - 48px);background:#fff;border-radius:46px;overflow:hidden;display:flex;flex-direction:column}
+  .notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:108px;height:30px;background:var(--ink);border-radius:999px;z-index:20}
+
+  .statusbar{flex:none;display:flex;justify-content:space-between;align-items:center;padding:16px 28px 6px}
+  .statusbar .clk{font-size:14px;font-weight:700;letter-spacing:-.01em}
+  .bars{display:flex;align-items:flex-end;gap:2px;height:11px}
+  .bars span{width:3px;border-radius:1px;background:currentColor}
+  .batt{width:22px;height:11px;border:1.4px solid currentColor;border-radius:3px;padding:1.5px;display:flex}
+  .batt i{flex:1;background:currentColor;border-radius:1px}
+
+  .content{flex:1;overflow-y:auto;padding:8px 24px 8px}
+  .content::-webkit-scrollbar{display:none}
+  .approw{display:flex;align-items:center;justify-content:space-between;margin-top:2px}
+  .appname{font-weight:800;font-size:23px;letter-spacing:-.03em}
+  .refresh{border:none;background:none;color:#B9B4AC;cursor:pointer;font-size:18px;padding:4px;line-height:1}
+  .h2{font-weight:900;font-size:30px;line-height:1;letter-spacing:-.045em;margin:22px 0 0}
+  .sub{font-size:13px;color:var(--muted);line-height:1.6}
+
+  .chips{display:flex;gap:8px;overflow-x:auto;margin:16px 0 18px;cursor:grab;user-select:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;font-size:13px;font-weight:600;padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink);white-space:nowrap;cursor:pointer}
+  .chip.on{background:var(--orange-soft);color:var(--orange-deep);border-color:#F3CFC0;font-weight:700}
+  .chip.allon{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  .card{background:#fff;border:1px solid #EFEDE9;border-radius:22px;padding:20px;box-shadow:0 16px 34px -14px rgba(250,75,30,.18),0 2px 6px rgba(22,19,15,.04);margin-bottom:14px;cursor:pointer}
+  .crow{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .cat{font-size:12px;font-weight:700;padding:6px 11px;border-radius:999px;background:var(--orange-soft);color:var(--orange-deep)}
+  .cat.gray{background:var(--gray2);color:var(--ink)}
+  .like{display:flex;align-items:center;gap:6px;cursor:pointer;border:none;background:none;padding:0}
+  .like .hv{display:inline-flex;align-items:center;color:var(--orange)}
+  .like .hv.pop{animation:pop .4s ease}
+  .like .n{font-weight:200;font-size:20px;color:var(--orange);line-height:1;font-variant-numeric:tabular-nums}
+  .like.off .hv{color:#C9C4BD}.like.off .n{color:var(--ink)}
+  .ctitle{font-weight:800;font-size:18px;line-height:1.2;letter-spacing:-.03em;flex:1;min-width:0}
+  .ctitlerow{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .card.open .ctitlerow{margin-bottom:13px}
+  .chev{color:#B9B4AC;font-size:12px;flex:none}
+  .pbox{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:12px;line-height:1.5;color:var(--ink);margin-bottom:10px;white-space:pre-wrap}
+  .ba{display:flex;gap:9px;margin-bottom:12px}
+  .ba>div{flex:1;border-radius:14px;padding:11px 13px}
+  .ba .b{background:var(--gray)}.ba .a{background:var(--orange-soft)}
+  .ba .lab{font-weight:700;font-size:11.5px;margin-bottom:3px}
+  .ba .b .lab{color:var(--muted)}.ba .b .v{font-size:11.5px;color:var(--muted);line-height:1.4}
+  .ba .a .lab{color:var(--orange-deep)}.ba .a .v{font-size:11.5px;color:var(--ink);line-height:1.4}
+  .key{background:var(--key-bg);border-radius:14px;padding:13px 15px}
+  .keytag{background:var(--ink);color:#fff;font-size:11px;font-weight:800;letter-spacing:.08em;padding:4px 9px;border-radius:6px}
+  .keyline{font-weight:800;font-size:14px;line-height:1.35;letter-spacing:-.02em;margin-top:9px}
+  .tip{display:flex;align-items:flex-start;gap:7px;margin-top:12px}
+  .tip .tiphv{color:var(--orange);font-size:13px;line-height:1.3}
+  .tip .x{font-size:11.5px;color:var(--muted);line-height:1.4}
+  .author{font-size:10.5px;color:#B9B4AC;margin-top:10px;text-align:right}
+
+  .field{margin-top:18px}
+  .flabel{font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:8px}
+  .ta{width:100%;background:#fff;border:1px solid var(--gray);border-radius:14px;padding:14px 16px;font-size:13px;line-height:1.55;color:var(--ink);font-family:inherit;resize:none;outline:none}
+  .ta:focus{border-color:var(--orange)}
+  .note{margin-top:14px;background:#FFF1EC;border-radius:14px;padding:13px 16px;display:flex;align-items:center;gap:9px}
+  .note .dot{width:7px;height:7px;border-radius:50%;background:var(--orange);flex:none}
+  .note .x{font-size:12px;line-height:1.4;color:var(--orange-deep);font-weight:500}
+  .toggle{margin-top:18px;display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none}
+  .sw{width:50px;height:30px;border-radius:999px;background:var(--orange);position:relative;flex:none;transition:background .2s}
+  .sw i{position:absolute;top:3px;right:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
+  .regchips{display:flex;flex-wrap:wrap;gap:8px}
+  .sw.off{background:#D9D5CE}.sw.off i{right:23px}
+  .cta{width:100%;border:none;background:var(--ink);color:#fff;font-family:inherit;font-weight:700;font-size:15px;padding:16px;border-radius:999px;cursor:pointer;margin-top:22px}
+  .cta:disabled{opacity:.55;cursor:default}
+  .ghostback{border:none;background:none;color:var(--muted);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:0;margin-top:4px}
+  .aibadge{display:flex;align-items:center;gap:7px;margin:18px 0 12px}
+  .aibadge .d{width:7px;height:7px;border-radius:50%;background:var(--orange)}
+  .aibadge .t{font-size:13px;font-weight:700}
+
+  .tabbar{flex:none;margin:0 16px 16px;background:var(--gray2);border-radius:999px;padding:5px;display:flex;gap:4px;box-shadow:0 6px 18px rgba(22,19,15,.10)}
+  .tab{flex:1;text-align:center;padding:11px;border-radius:999px;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer}
+  .tab.on{background:var(--ink);color:#fff;font-weight:700}
+
+  .bestcard{background:#fff;border:1px solid var(--gray);border-radius:18px;padding:16px 18px;display:flex;gap:16px;align-items:flex-start;margin-bottom:12px;cursor:pointer}
+  .bestcard.top{box-shadow:0 16px 34px -14px rgba(250,75,30,.18),0 2px 6px rgba(22,19,15,.04)}
+  .rank{font-weight:200;font-size:42px;line-height:.85;font-variant-numeric:tabular-nums;flex:none;width:34px}
+  .rank.one{color:var(--orange)}.rank.other{color:#C9C4BD}
+  .btitlerow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:5px}
+  .bestcard.open .btitlerow{margin-bottom:11px}
+  .btitle{font-weight:800;font-size:15px;line-height:1.25;letter-spacing:-.02em;flex:1;min-width:0}
+  .bkey{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .footnote{font-size:11px;color:#B9B4AC;text-align:center;margin:6px 0 2px}
+  .empty{border:1px dashed var(--line);border-radius:18px;padding:48px 20px;text-align:center;color:var(--muted);font-size:13px;margin-top:6px}
+  .profilecard{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #EFEDE9;border-radius:22px;padding:18px 20px;box-shadow:0 16px 34px -14px rgba(250,75,30,.14),0 2px 6px rgba(22,19,15,.04);margin-top:18px}
+  .avatar{width:52px;height:52px;border-radius:50%;background:var(--orange-soft);color:var(--orange-deep);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px;flex:none}
+  .pname{font-weight:800;font-size:18px;letter-spacing:-.02em}
+  .pbio{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
+  .pstats{font-size:11px;color:#B9B4AC;margin-top:7px}
+  .editp{border:1px solid var(--line);background:#fff;color:var(--muted);font-family:inherit;font-size:12px;font-weight:600;padding:7px 12px;border-radius:999px;cursor:pointer;flex:none;align-self:flex-start}
+  .sectit{font-weight:800;font-size:15px;letter-spacing:-.02em;margin:24px 0 12px}
+  .myactions{display:flex;align-items:center;gap:8px;margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
+  .tagmini{margin-right:auto;font-size:11px;color:#B9B4AC}
+  .minibtn{border:1px solid var(--line);background:#fff;color:var(--ink);font-family:inherit;font-size:12px;font-weight:600;padding:7px 14px;border-radius:999px;cursor:pointer}
+  .minibtn.danger{color:var(--orange-deep);border-color:#F3CFC0}
+
+  .splash{position:absolute;inset:0;background:var(--ink);overflow:hidden}
+  .ghost{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  .ghost span{font-weight:900;font-size:210px;letter-spacing:-.06em;color:rgba(255,255,255,.05);line-height:.8}
+  .splashc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;padding:0 40px}
+  .stitle{font-weight:900;font-size:46px;line-height:.98;letter-spacing:-.045em;color:#fff;text-align:center}
+  .loader{position:absolute;left:40px;right:40px;bottom:54px}
+  .lbar{height:4px;background:rgba(255,255,255,.12);border-radius:999px;overflow:hidden}
+  .lbar>i{position:relative;display:block;height:100%;width:0;background:var(--orange);border-radius:999px;overflow:hidden;transition:width .1s linear}
+  .lbar>i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);animation:shimmer 1.4s linear infinite}
+  .lrow{display:flex;align-items:baseline;justify-content:space-between;margin-top:14px}
+  .lrow .l{font-size:13px;color:var(--muted)}
+  .pct{font-weight:200;font-size:30px;color:#fff;line-height:1;font-variant-numeric:tabular-nums}
+  .pct b{font-size:15px;color:var(--muted);font-weight:200}
+
+  .toast{position:absolute;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:13px;font-weight:600;padding:10px 18px;border-radius:999px;white-space:nowrap;z-index:50;box-shadow:0 8px 20px rgba(0,0,0,.25);animation:popin .2s ease}
+
+  /* ── 모바일(좁은 화면)에서는 가짜 폰 테두리·상태바를 없애고 화면을 꽉 채움 ── */
+  @media (max-width:480px){
+    .wrap{display:block;padding:0;min-height:100vh;min-height:100dvh;background:#fff}
+    .phone{display:block;width:100%;background:none;padding:0;border-radius:0;box-shadow:none}
+    .screen{width:100%;height:100vh;height:100dvh;max-width:none;max-height:none;border-radius:0}
+    .notch{display:none}
+    .statusbar{display:none}
+    .content{padding-top:calc(8px + env(safe-area-inset-top))}
+    .tabbar{margin-bottom:calc(16px + env(safe-area-inset-bottom))}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="phone"><div class="screen" id="screen"></div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const CATS = ["회의록·요약","기획·문서작성","자료조사·리서치","발표·PPT","실무·감사·세무","기타"];
+const H = 3600000, NOW = Date.now();
+
+// ── Supabase 연결 (공개키 — 브라우저에 노출돼도 안전한 키입니다) ──
+const SUPABASE_URL = "https://jiuxvygxzfeikpsspwvh.supabase.co";
+const SUPABASE_ANON = "sb_publishable_y4bDV4lU4plDHGU8BEGUww_0S6uBAsH";
+const sb = (window.supabase && window.supabase.createClient) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON) : null;
+
+// 나중에 진짜 Claude API 키가 생기면, 백엔드(서버리스 함수) 주소를 여기에 넣으세요.
+// 비워두면 지금처럼 '규칙 기반'으로 KEY를 만듭니다. (API 키·결제 불필요)
+const AI_ENDPOINT = "";
+
+// 이 브라우저의 가벼운 신원 (로그인 없음). 이름/내 글 목록은 이 브라우저에만 저장돼요.
+const LS_UID = "pg:uid", LS_PROFILE = "pg:profile", LS_MINE = "pg:mine";
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function uidGet(){ let u=lsGet(LS_UID); if(!u){ u="u_"+Math.random().toString(36).slice(2)+Date.now().toString(36); lsSet(LS_UID,u); } return u; }
+const userId = uidGet();
+// DB 한 줄(row)을 화면이 쓰는 카드 모양으로 바꿔주는 변환기
+function rowToCard(r){ return { id:r.id, category:r.category, situation:r.situation, prompt:r.prompt, beforeAfter:{before:r.before_text||"",after:r.after_text||""}, tip:r.tip||"", key:r.key_text||"", author:r.author||"익명", likes:r.likes||0, createdAt:r.created_at?new Date(r.created_at).getTime():Date.now() }; }
+
+const SEEDS = [
+  {id:"seed_1",category:"회의록·요약",author:"익명",likes:31,createdAt:NOW-2*H,
+   situation:"회의록을 핵심·결정·담당 표로",
+   prompt:"회의 메모를 ‘핵심 / 결정 / 담당 / 기한’ 표로 정리해줘. 애매한 건 ‘확인 필요’로 표시.",
+   beforeAfter:{before:"핵심이 줄글에 묻힘",after:"표로 한눈에 정리"},
+   tip:"‘확인 필요’ 라벨로 빠진 정보를 드러내요",
+   key:"출력 형식을 표로 못 박아 누락을 막는다"},
+  {id:"seed_2",category:"기획·문서작성",author:"김민수",likes:27,createdAt:NOW-9*H,
+   situation:"개정·변동 분석 초안",
+   prompt:"최근 개정·변동 사항을 ‘항목 / 변경 전후 / 영향도(상·중·하)’ 표로 정리해줘.",
+   beforeAfter:{before:"변경점이 흩어져 있음",after:"영향도까지 한 표에"},
+   tip:"영향도 기준을 먼저 정의하면 더 일관돼요",
+   key:"변경 전후를 한 표에 묶어 비교를 강제한다"},
+  {id:"seed_3",category:"실무·감사·세무",author:"이민정",likes:26,createdAt:NOW-6*H,
+   situation:"긴 산출물에서 핵심만",
+   prompt:"이 문서를 ‘목적 / 핵심 수치 / 확인 포인트’ 5줄로 요약해줘.",
+   beforeAfter:{before:"길어서 포인트를 놓침",after:"확인 포인트가 명시됨"},
+   tip:"확인 포인트를 직접 더 추가해보세요",
+   key:"확인 포인트를 명시해 검토 누락을 막는다"},
+  {id:"seed_4",category:"자료조사·리서치",author:"익명",likes:22,createdAt:NOW-30*H,
+   situation:"업계 동향 1페이지 브리프",
+   prompt:"이 주제를 ‘현황 / 변화 동인 / 시사점’ 1페이지 브리프로 정리해줘.",
+   beforeAfter:{before:"정보는 많지만 정리가 안 됨",after:"의사결정용 1페이지로"},
+   tip:"‘시사점’을 우리 팀 관점으로 좁혀보세요",
+   key:"리서치를 의사결정 틀에 맞춰 정리한다"},
+  {id:"seed_5",category:"발표·PPT",author:"박지훈",likes:19,createdAt:NOW-40*H,
+   situation:"발표 슬라이드 골격 잡기",
+   prompt:"이 내용을 5장 슬라이드 골격으로. 장마다 제목 + 핵심 3줄.",
+   beforeAfter:{before:"장표가 늘어지고 흐려짐",after:"5장·장당 3줄로 또렷"},
+   tip:"장수를 바꿔 발표 길이를 맞춰요",
+   key:"장수·줄수를 고정해 분량 폭주를 막는다"},
+  {id:"seed_6",category:"회의록·요약",author:"익명",likes:18,createdAt:NOW-5*H,
+   situation:"긴 메일 스레드 4줄 요약",
+   prompt:"이 스레드를 ‘배경 / 쟁점 / 결론 / 내가 할 일’ 4줄로 요약해줘.",
+   beforeAfter:{before:"내 할 일을 늦게 앎",after:"맥락+할 일이 바로"},
+   tip:"‘내가 할 일’로 관점을 고정하세요",
+   key:"항목 4개를 지정해 군더더기를 자른다"},
+  {id:"seed_7",category:"기획·문서작성",author:"정수아",likes:15,createdAt:NOW-26*H,
+   situation:"보고서 목차부터 잡기",
+   prompt:"보고서 목차를 ‘독자 → 결론 → 근거’ 5장 구조로 잡아줘.",
+   beforeAfter:{before:"글이 흩어지고 결론이 약함",after:"한 방향으로 모임"},
+   tip:"독자를 한 명 구체적으로 정해요",
+   key:"구조 틀을 먼저 줘 흩어짐을 막는다"},
+  {id:"seed_8",category:"기타",author:"익명",likes:13,createdAt:NOW-50*H,
+   situation:"표 정합성 점검",
+   prompt:"이 표에서 합계 불일치 / 빈칸 / 중복을 ‘위치 - 문제 - 제안’ 표로 정리해줘.",
+   beforeAfter:{before:"눈으로 대조하다 놓침",after:"오류가 표로 정리됨"},
+   tip:"오류 유형을 가감해 범위를 조절해요",
+   key:"찾을 오류 유형을 지정해 점검을 구조화한다"}
+];
+
+const DEFAULT_PROFILE = { name:"김신입", bio:"2026 Pre-boarding · 신입 회계사" };
+let state = { tab:"loading", cat:"전체", cards:[], liked:[], preview:null, situation:"", prompt:"", anon:true, regCat:CATS[0], open:{}, popId:null,
+  profile:Object.assign({},DEFAULT_PROFILE), mine:[], mySub:null, editId:null, editCat:CATS[0], editSit:"", editPr:"", confirmDel:null };
+
+function safeParse(s){ try{ return JSON.parse(s); }catch(e){ return null; } }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function weekStart(){ const d=new Date(); const day=(d.getDay()+6)%7; d.setHours(0,0,0,0); d.setDate(d.getDate()-day); return d.getTime(); }
+
+const KW = {
+  "회의록·요약":["회의","요약","메일","스레드","정리","핵심","회의록"],
+  "발표·PPT":["슬라이드","ppt","발표","장표","피칭","피치"],
+  "자료조사·리서치":["조사","리서치","동향","비교","벤치마","시장","현황","브리프"],
+  "실무·감사·세무":["감사","세무","조서","세금","계정","전표","재무","산출물"],
+  "기획·문서작성":["보고서","기획","목차","초안","문서","작성","분석","기안","개정","변동"]
+};
+function heuristic(sit, pr){
+  const low = (sit+" "+pr).toLowerCase();
+  let cat = "기타";
+  for(const c of Object.keys(KW)){ if(KW[c].some(k=>low.includes(k))){ cat=c; break; } }
+  const num = pr.match(/(\d+)\s*(줄|개|장|단계|문장|쪽|페이지)/);
+  const hasTable = /표|테이블|칼럼|컬럼|열|행/.test(pr);
+  const hasCompare = /비교|대비|전후|차이|vs/.test(pr);
+  const hasStruct = /목차|구조|틀|순서|→|->|\//.test(pr);
+  const hasSummary = /요약|핵심|간단|추려|정리/.test(pr);
+  const hasDesign = /디자인|스타일|모던|미니멀|미래지향|세련|비주얼|색상|컬러|아이콘|레이아웃|폰트|서체|톤앤매너|분위기|그래픽|템플릿|배색|포인트\s*컬러|꾸며/.test(pr);
+  const hasEmail = /이메일|메일|회신|답장|공문|안내문/.test(pr);
+  const hasTranslate = /번역|영문|영어로|영작|한글로|일본어|중국어|translate/i.test(pr);
+  const hasTone = /말투|톤|어조|정중|공손|격식|부드럽게|완곡|딱딱|예의|순화/.test(pr);
+  const hasReview = /검토|교정|첨삭|윤문|맞춤법|오탈자|오타|비문|검수|교열/.test(pr);
+  const hasCheck = /체크리스트|점검|리스크|위험|누락|체크|점검표/.test(pr);
+  const hasAnalysis = /분석|추세|증감|추이|비율|원인|패턴|인사이트/.test(pr);
+  const hasIdeas = /아이디어|브레인스토밍|발상|아이디에이션/.test(pr);
+  const hasExplain = /쉽게|풀어서|초보|비전문가|눈높이|이해하기/.test(pr);
+  let key, before, after, tip;
+  if(hasEmail){
+    key="받는 사람·목적·요청을 먼저 지정해 바로 보낼 수 있는 메일을 만든다";
+    before="무엇부터 쓸지 막막하고 말투가 들쭉날쭉"; after="목적에 맞는 메일이 형식까지 갖춰 한 번에";
+    tip="받는 사람과 원하는 어조(정중·간결 등)를 함께 적어주세요";
+  } else if(hasTranslate){
+    key="용도와 대상 독자를 함께 줘 직역이 아닌 자연스러운 번역을 끌어낸다";
+    before="직역체라 어색하고 뉘앙스가 빠짐"; after="맥락에 맞게 자연스럽게 번역됨";
+    tip="격식 수준과 용도(이메일·보고서 등)를 함께 알려주세요";
+  } else if(hasTone){
+    key="원하는 어조를 명시해 같은 내용을 상황에 맞는 말투로 다듬는다";
+    before="딱딱하거나 무례하게 읽힐 수 있음"; after="상황에 맞는 어조로 매끄럽게 정리됨";
+    tip="원하는 어조(정중·단호·부드럽게 등)를 한 단어로 지정해보세요";
+  } else if(hasReview){
+    key="무엇을 점검할지(오탈자·비문·논리)를 지정해 빠짐없이 교정한다";
+    before="눈으로 보다 오탈자·비문을 놓침"; after="오류와 어색한 문장이 짚여 정리됨";
+    tip="맞춤법·논리·일관성 중 무엇을 볼지 골라 지정해보세요";
+  } else if(hasDesign){
+    key="디자인 방향(스타일·색·아이콘)을 구체적으로 지정해 결과물의 완성도를 끌어올린다";
+    before="밋밋하고 정돈되지 않은 기본 디자인"; after="원하는 스타일로 일관되게 다듬어진 디자인";
+    tip="스타일 키워드(모던·미니멀·포인트 컬러 등)를 더 구체적으로 지정해보세요";
+  } else if(hasCheck){
+    key="점검 항목을 미리 정해 빠뜨리기 쉬운 리스크를 체크리스트로 드러낸다";
+    before="무엇을 확인해야 할지 빠뜨리기 쉬움"; after="확인할 항목이 체크리스트로 정리됨";
+    tip="점검 기준이나 위험 등급을 함께 지정하면 더 촘촘해져요";
+  } else if(hasAnalysis){
+    key="보고 싶은 지표와 관점을 지정해 숫자에서 의미를 뽑아낸다";
+    before="숫자만 나열돼 의미를 읽기 어려움"; after="추세·증감과 그 원인이 짚여 정리됨";
+    tip="기간·기준·비교 대상을 함께 지정하면 더 정확해져요";
+  } else if(hasIdeas){
+    key="관점이나 제약을 줘 쓸 만한 아이디어로 발상을 좁힌다";
+    before="막연하거나 뻔한 아이디어에 그침"; after="관점별로 정리된 실행 가능한 아이디어로";
+    tip="예산·기간·대상 같은 제약을 한두 개 걸어보세요";
+  } else if(hasExplain){
+    key="독자 수준을 지정해 어려운 내용을 눈높이에 맞게 풀어준다";
+    before="전문 용어가 많아 이해가 어려움"; after="비전문가도 이해할 수 있게 풀어서 설명됨";
+    tip="독자(신입·고객 등)와 원하는 길이를 함께 지정해보세요";
+  } else if(hasTable){
+    key="출력을 표로 못 박아 항목 누락을 막는다";
+    before="줄글로 받아 항목이 빠지기 쉬움"; after="표로 빠짐없이 정리됨";
+    tip="표의 칼럼을 늘리거나 줄여 점검 범위를 조절해보세요";
+  } else if(num){
+    key="분량을 "+num[1]+num[2]+"로 고정해 폭주를 막는다";
+    before="분량이 들쭉날쭉해 정리가 안 됨"; after=num[1]+num[2]+"로 깔끔하게 정리됨";
+    tip="개수("+num[1]+num[2]+")를 바꿔 분량을 맞춰보세요";
+  } else if(hasCompare){
+    key="전후를 같은 틀에 묶어 비교를 강제한다";
+    before="차이가 흩어져 잘 안 보임"; after="비교가 한눈에 들어옴";
+    tip="비교 기준을 먼저 정의하면 더 일관돼요";
+  } else if(hasStruct){
+    key="구조 틀을 먼저 줘 내용이 흩어지지 않게 한다";
+    before="바로 쓰면 내용이 흩어짐"; after="틀에 맞춰 한 방향으로 정돈됨";
+    tip="틀의 순서나 단계를 바꿔보세요";
+  } else if(hasSummary){
+    key="필요한 항목만 지정해 군더더기를 줄인다";
+    before="군더더기가 많아 핵심이 묻힘"; after="핵심만 또렷하게 추려짐";
+    tip="원하는 항목을 직접 더 지정해보세요";
+  } else {
+    key="원하는 형식과 항목을 미리 지정해 결과를 통제한다";
+    before="형식이 들쭉날쭉해 다시 손봄"; after="원하는 형식으로 한 번에 정리됨";
+    tip="형식·개수·관점 중 하나를 더 구체적으로 지정해보세요";
+  }
+  return { category:cat, beforeAfter:{before,after}, tip, key };
+}
+async function classify(sit, pr){
+  // 기본값: API 키 없이 동작하는 '규칙 기반' KEY 생성.
+  // AI_ENDPOINT가 비어 있으면 곧장 규칙 기반 결과를 돌려줍니다. (지금 상태)
+  // 나중에 진짜 Claude API용 백엔드를 만들면 AI_ENDPOINT만 채우면 됩니다.
+  if(AI_ENDPOINT){
+    try{
+      const res = await fetch(AI_ENDPOINT, {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ situation:sit, prompt:pr })
+      });
+      if(res.ok){
+        const parsed = await res.json();
+        if(parsed && CATS.includes(parsed.category)) return Object.assign(heuristic(sit,pr), parsed);
+      }
+    }catch(e){}
+  }
+  return heuristic(sit, pr);
+}
+
+function toast(msg){
+  const sc = document.getElementById("screen");
+  const old = sc.querySelector(".toast"); if(old) old.remove();
+  const t = document.createElement("div"); t.className="toast"; t.textContent=msg; sc.appendChild(t);
+  setTimeout(()=>{ if(t.parentNode) t.remove(); }, 1800);
+}
+
+function statusbar(dark){
+  const col = dark ? "#fff" : "var(--ink)";
+  return '<div class="statusbar" style="color:'+col+'"><span class="clk">9:41</span>'+
+    '<div style="display:flex;align-items:center;gap:7px">'+
+    '<div class="bars"><span style="height:5px"></span><span style="height:7px"></span><span style="height:9px"></span><span style="height:11px"></span></div>'+
+    '<div class="batt"><i></i></div></div></div>';
+}
+
+function heartSVG(size){
+  return '<svg viewBox="0 0 24 24" width="'+size+'" height="'+size+'" fill="currentColor" aria-hidden="true">'+
+    '<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+}
+function likeBtn(c, hs){
+  const liked = state.liked.includes(c.id);
+  const pop = c.id===state.popId ? " pop" : "";
+  return '<button class="like'+(liked?"":" off")+'" data-like="'+c.id+'" onclick="event.stopPropagation();like(\''+c.id+'\')" aria-label="좋아요">'+
+    '<span class="hv'+pop+'">'+heartSVG(hs)+'</span><span class="n">'+c.likes+'</span></button>';
+}
+function detailsHTML(c){
+  return '<div class="pbox">'+esc(c.prompt)+'</div>'+
+    '<div class="ba"><div class="b"><div class="lab">Before</div><div class="v">'+esc(c.beforeAfter.before)+'</div></div>'+
+    '<div class="a"><div class="lab">After</div><div class="v">'+esc(c.beforeAfter.after)+'</div></div></div>'+
+    '<div class="key"><span class="keytag">KEY</span><div class="keyline">'+esc(c.key)+'</div></div>'+
+    '<div class="tip"><span class="tiphv">♥</span><span class="x">'+esc(c.tip)+'</span></div>';
+}
+function cardHTML(c){
+  const orange = state.cat!=="전체" && c.category===state.cat;
+  const open = !!state.open[c.id];
+  return '<div class="card'+(open?" open":"")+'" onclick="toggle(\''+c.id+'\')">'+
+    '<div class="crow"><span class="cat'+(orange?"":" gray")+'">'+esc(c.category)+'</span>'+likeBtn(c,20)+'</div>'+
+    '<div class="ctitlerow"><div class="ctitle">'+esc(c.situation)+'</div><span class="chev">'+(open?"▾":"▸")+'</span></div>'+
+    (open ? detailsHTML(c)+'<div class="author">by '+esc(c.author)+'</div>' : "")+
+    '</div>';
+}
+
+function galleryHTML(){
+  const cats = ["전체"].concat(CATS);
+  const chips = cats.map(c=>{
+    const on = state.cat===c;
+    const cls = on ? (c==="전체"?"chip allon":"chip on") : "chip";
+    return '<span class="'+cls+'" onclick="pick(\''+c+'\')">'+esc(c)+(c==="전체"&&on?" ↗":"")+'</span>';
+  }).join("");
+  const list = state.cat==="전체" ? state.cards : state.cards.filter(c=>c.category===state.cat);
+  const body = list.length ? list.map(cardHTML).join("")
+    : '<div class="empty">이 카테고리엔 아직 카드가 없어요.<br>첫 카드를 올려보세요.</div>';
+  return appname()+'<div class="chips" id="chips">'+chips+'</div>'+body;
+}
+
+function registerHTML(){
+  if(state.preview){
+    const p = state.preview;
+    return appname()+
+      '<button class="ghostback" onclick="backPreview()">‹ 다시 쓰기</button>'+
+      '<div class="aibadge"><span class="d"></span><span class="t">AI가 KEY와 해설을 채웠어요</span></div>'+
+      '<div class="card open" style="cursor:default">'+
+      '<div class="crow"><span class="cat">'+esc(p.category)+'</span></div>'+
+      '<div class="ctitlerow"><div class="ctitle">'+esc(state.situation)+'</div></div>'+
+      detailsHTML({prompt:state.prompt,beforeAfter:p.beforeAfter,key:p.key,tip:p.tip})+
+      '</div>'+
+      '<button class="cta" onclick="savePreview()">갤러리에 올리기</button>';
+  }
+  const chips = CATS.map(c=>'<span class="chip'+(state.regCat===c?" on":"")+'" onclick="pickReg(\''+c+'\')">'+esc(c)+'</span>').join("");
+  return appname()+
+    '<h2 class="h2">좋은 프롬프트를<br>발견했나요?</h2>'+
+    '<p class="sub" style="margin-top:14px;font-size:12px">카테고리를 고르고 상황·프롬프트를 넣으면 AI가 KEY를 채워줘요.</p>'+
+    '<div class="field"><div class="flabel">카테고리</div><div class="regchips">'+chips+'</div></div>'+
+    '<div class="field"><div class="flabel">상황</div>'+
+    '<textarea class="ta" id="f_sit" rows="2" oninput="sync(\'situation\',this.value)" placeholder="예: 회의록을 핵심·결정·담당 표로">'+esc(state.situation)+'</textarea></div>'+
+    '<div class="field"><div class="flabel">프롬프트</div>'+
+    '<textarea class="ta" id="f_pr" rows="4" oninput="sync(\'prompt\',this.value)" placeholder="효과 봤던 프롬프트를 그대로 붙여넣어 주세요">'+esc(state.prompt)+'</textarea></div>'+
+    '<div class="note"><span class="dot"></span><span class="x">회사·클라이언트명은 빼고 일반화해서 등록하세요.</span></div>'+
+    '<div class="toggle" onclick="toggleAnon(this)"><div class="sw'+(state.anon?"":" off")+'"><i></i></div><span style="font-size:14px;font-weight:600">익명으로 등록</span></div>'+
+    '<button class="cta" id="cta" onclick="doRegister()">등록하기</button>';
+}
+
+function bestHTML(){
+  const ws = weekStart();
+  let weekly = state.cards.filter(c=>c.createdAt>=ws).sort((a,b)=>b.likes-a.likes);
+  const pool = weekly.length>=3 ? weekly : state.cards.slice().sort((a,b)=>b.likes-a.likes);
+  const top = pool.slice(0,3);
+  const rows = top.map((c,i)=>{
+    const open = !!state.open[c.id];
+    return '<div class="bestcard'+(i===0?" top":"")+(open?" open":"")+'" onclick="toggle(\''+c.id+'\')">'+
+      '<span class="rank '+(i===0?"one":"other")+'">'+(i+1)+'</span>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div class="crow" style="margin-bottom:9px"><span class="cat'+(i===0?"":" gray")+'">'+esc(c.category)+'</span>'+likeBtn(c,18)+'</div>'+
+        '<div class="btitlerow"><div class="btitle">'+esc(c.situation)+'</div><span class="chev">'+(open?"▾":"▸")+'</span></div>'+
+        (open ? detailsHTML(c) : '<div class="bkey">'+esc(c.key)+'</div>')+
+      '</div></div>';
+  }).join("");
+  return appname()+'<h2 class="h2">이번 주 베스트</h2><p class="sub" style="margin:4px 0 22px">좋아요가 가장 많은 KEY 카드 Top 3</p>'+rows;
+}
+
+function initials(name){ const n=(name||"").trim(); return n? n.slice(0,2) : "나"; }
+
+function myCardHTML(c){
+  const open = !!state.open[c.id];
+  const anon = c.author==="익명";
+  const confirming = state.confirmDel===c.id;
+  return '<div class="card'+(open?" open":"")+'" onclick="toggle(\''+c.id+'\')">'+
+    '<div class="crow"><span class="cat gray">'+esc(c.category)+'</span>'+likeBtn(c,20)+'</div>'+
+    '<div class="ctitlerow"><div class="ctitle">'+esc(c.situation)+'</div><span class="chev">'+(open?"▾":"▸")+'</span></div>'+
+    (open ? detailsHTML(c) : "")+
+    '<div class="myactions">'+(anon?'<span class="tagmini">익명 등록</span>':'<span class="tagmini">'+esc(c.author)+'</span>')+
+      '<button class="minibtn" onclick="event.stopPropagation();editCard(\''+c.id+'\')">수정</button>'+
+      '<button class="minibtn danger" onclick="event.stopPropagation();delCard(\''+c.id+'\')">'+(confirming?"한 번 더 탭":"삭제")+'</button>'+
+    '</div></div>';
+}
+
+function myHTML(){
+  if(state.mySub==="editProfile") return profileEditHTML();
+  if(state.mySub==="editCard") return cardEditHTML();
+  const p = state.profile;
+  const mineCards = state.mine.map(id=>state.cards.find(c=>c.id===id)).filter(Boolean);
+  const likedCards = state.liked.map(id=>state.cards.find(c=>c.id===id)).filter(Boolean);
+  let html = appname()+'<h2 class="h2" style="margin-top:18px">MY</h2>'+
+    '<div class="profilecard">'+
+      '<div class="avatar">'+esc(initials(p.name))+'</div>'+
+      '<div style="flex:1;min-width:0"><div class="pname">'+esc(p.name)+'</div>'+
+        '<div class="pbio">'+esc(p.bio)+'</div>'+
+        '<div class="pstats">올린 프롬프트 '+mineCards.length+' · 좋아요 '+state.liked.length+'</div></div>'+
+      '<button class="editp" onclick="editProfile()">수정</button>'+
+    '</div>';
+  html += '<div class="sectit">내가 올린 프롬프트 '+mineCards.length+'</div>';
+  html += mineCards.length ? mineCards.map(myCardHTML).join("")
+    : '<div class="empty">아직 올린 프롬프트가 없어요.<br>등록 탭에서 첫 카드를 올려보세요.</div>';
+  html += '<div class="sectit">내가 좋아요한 프롬프트 '+state.liked.length+'</div>';
+  html += likedCards.length ? likedCards.map(cardHTML).join("")
+    : '<div class="empty">아직 좋아요한 카드가 없어요.</div>';
+  return html;
+}
+
+function profileEditHTML(){
+  const p = state.profile;
+  return appname()+
+    '<button class="ghostback" onclick="myBack()">‹ 뒤로</button>'+
+    '<h2 class="h2" style="margin-top:10px">프로필 수정</h2>'+
+    '<div class="field"><div class="flabel">이름</div>'+
+    '<textarea class="ta" id="pf_name" rows="1">'+esc(p.name)+'</textarea></div>'+
+    '<div class="field"><div class="flabel">한 줄 소개</div>'+
+    '<textarea class="ta" id="pf_bio" rows="2">'+esc(p.bio)+'</textarea></div>'+
+    '<button class="cta" onclick="saveProfile()">저장</button>';
+}
+
+function cardEditHTML(){
+  const chips = CATS.map(c=>'<span class="chip'+(state.editCat===c?" on":"")+'" onclick="pickEdit(\''+c+'\')">'+esc(c)+'</span>').join("");
+  return appname()+
+    '<button class="ghostback" onclick="myBack()">‹ 뒤로</button>'+
+    '<h2 class="h2" style="margin-top:10px">프롬프트 수정</h2>'+
+    '<p class="sub" style="margin-top:12px;font-size:12px">내용을 고치면 AI가 KEY·해설을 다시 채워줘요.</p>'+
+    '<div class="field"><div class="flabel">카테고리</div><div class="regchips">'+chips+'</div></div>'+
+    '<div class="field"><div class="flabel">상황</div>'+
+    '<textarea class="ta" id="ed_sit" rows="2" oninput="sync(\'editSit\',this.value)">'+esc(state.editSit)+'</textarea></div>'+
+    '<div class="field"><div class="flabel">프롬프트</div>'+
+    '<textarea class="ta" id="ed_pr" rows="4" oninput="sync(\'editPr\',this.value)">'+esc(state.editPr)+'</textarea></div>'+
+    '<button class="cta" id="edcta" onclick="saveEdit()">저장</button>';
+}
+
+window.go = function(tab){ state.tab=tab; state.preview=null; state.mySub=null; state.confirmDel=null; render(); };
+window.editProfile = function(){ state.mySub="editProfile"; render(); };
+window.myBack = function(){ state.mySub=null; state.editId=null; state.confirmDel=null; render(); };
+window.saveProfile = async function(){
+  const name=(document.getElementById("pf_name").value||"").trim()||"나";
+  const bio=(document.getElementById("pf_bio").value||"").trim();
+  state.profile={name,bio}; state.mySub=null;
+  lsSet(LS_PROFILE, JSON.stringify(state.profile));
+  render(); toast("프로필을 저장했어요");
+};
+window.editCard = function(id){
+  const c=state.cards.find(x=>x.id===id); if(!c) return;
+  state.editId=id; state.editCat=c.category; state.editSit=c.situation; state.editPr=c.prompt; state.mySub="editCard"; state.confirmDel=null; render();
+};
+window.pickEdit = function(c){ state.editCat=c; render(); };
+window.saveEdit = async function(){
+  const sit=(document.getElementById("ed_sit").value||"").trim();
+  const pr=(document.getElementById("ed_pr").value||"").trim();
+  if(!sit||!pr){ toast("상황과 프롬프트를 모두 채워주세요"); return; }
+  const btn=document.getElementById("edcta"); btn.disabled=true; btn.textContent="AI가 KEY 갱신 중…";
+  const r = await classify(sit, pr); r.category = state.editCat;
+  state.cards = state.cards.map(c=> c.id===state.editId ? Object.assign({},c,{category:r.category,situation:sit,prompt:pr,beforeAfter:r.beforeAfter,tip:r.tip,key:r.key}) : c);
+  if(sb){ try{ await sb.from('cards').update({ category:r.category, situation:sit, prompt:pr, before_text:r.beforeAfter.before, after_text:r.beforeAfter.after, tip:r.tip, key_text:r.key }).eq('id', state.editId); }catch(e){} }
+  state.mySub=null; state.editId=null;
+  render(); toast("수정했어요");
+};
+window.delCard = async function(id){
+  if(state.confirmDel!==id){ state.confirmDel=id; render(true); setTimeout(()=>{ if(state.confirmDel===id){ state.confirmDel=null; render(true); } },2600); return; }
+  state.cards = state.cards.filter(c=>c.id!==id);
+  state.mine = state.mine.filter(x=>x!==id);
+  state.liked = state.liked.filter(x=>x!==id);
+  delete state.open[id]; state.confirmDel=null;
+  lsSet(LS_MINE, JSON.stringify(state.mine));
+  if(sb){ try{ await sb.from('cards').delete().eq('id', id); }catch(e){} }
+  render(); toast("삭제했어요");
+};
+
+function appname(){
+  return '<div class="approw"><span class="appname">프롬프트 갤러리</span>'+
+    '<button class="refresh" onclick="refresh()" aria-label="새로고침">↻</button></div>';
+}
+
+function tabbar(){
+  const t=(k,l)=>'<div class="tab'+(state.tab===k?" on":"")+'" onclick="go(\''+k+'\')">'+l+'</div>';
+  return '<div class="tabbar">'+t("register","등록")+t("gallery","갤러리")+t("best","베스트")+t("my","MY")+'</div>';
+}
+
+function loadingHTML(){
+  return '<div class="splash">'+
+    '<div class="ghost"><span>KEY</span></div>'+
+    statusbar(true)+
+    '<div class="splashc">'+
+      '<svg width="142" viewBox="0 0 257 63" style="animation:floaty 3.4s ease-in-out infinite"><polygon points="150,0 257,0 241,31 131,31" fill="#fd5108"/><polygon points="18,32 128,32 110,63 0,63" fill="#fd5108"/></svg>'+
+      '<div class="stitle">프롬프트<br>갤러리</div>'+
+    '</div>'+
+    '<div class="loader"><div class="lbar"><i id="lbar"></i></div>'+
+      '<div class="lrow"><span class="l">디자인 토큰 불러오는 중…</span><span class="pct" id="lpct">0<b>%</b></span></div>'+
+    '</div></div>';
+}
+
+function render(keepScroll){
+  const sc = document.getElementById("screen");
+  if(state.tab==="loading"){ sc.innerHTML = loadingHTML(); startLoader(); return; }
+  let prev = 0;
+  if(keepScroll){ const c0 = sc.querySelector(".content"); if(c0) prev = c0.scrollTop; }
+  const chipsOld = sc.querySelector("#chips"); const chipsLeft = chipsOld ? chipsOld.scrollLeft : 0;
+  let content;
+  if(state.tab==="register") content = registerHTML();
+  else if(state.tab==="best") content = bestHTML();
+  else if(state.tab==="my") content = myHTML();
+  else content = galleryHTML();
+  sc.innerHTML = '<div class="notch"></div>'+statusbar(false)+'<div class="content" id="content">'+content+'</div>'+tabbar();
+  if(keepScroll){ const c1 = sc.querySelector(".content"); if(c1) c1.scrollTop = prev; }
+  const chipsNew = sc.querySelector("#chips"); if(chipsNew) chipsNew.scrollLeft = chipsLeft;
+  attachChipDrag();
+}
+
+let dataReady = false;
+function startLoader(){
+  const bar = document.getElementById("lbar"), pct = document.getElementById("lpct");
+  let v = 0;
+  const iv = setInterval(()=>{
+    v += Math.random()*9 + 4;
+    if(v >= 100){ v = 100; }
+    if(bar) bar.style.width = v+"%";
+    if(pct) pct.innerHTML = Math.round(v)+'<b>%</b>';
+    if(v >= 100){
+      clearInterval(iv);
+      const finish = ()=>{ state.tab="gallery"; render(); };
+      if(dataReady) setTimeout(finish, 280); else { const w=setInterval(()=>{ if(dataReady){ clearInterval(w); finish(); } },80); }
+    }
+  }, 130);
+}
+
+function attachChipDrag(){
+  const el = document.getElementById("chips"); if(!el) return;
+  let down=false, sx=0, sl=0, moved=false;
+  el.addEventListener("mousedown", e=>{ down=true; moved=false; sx=e.pageX; sl=el.scrollLeft; });
+  window.addEventListener("mousemove", e=>{ if(!down) return; const dx=e.pageX-sx; if(Math.abs(dx)>3) moved=true; el.scrollLeft=sl-dx; });
+  window.addEventListener("mouseup", ()=>{ down=false; });
+  el.addEventListener("click", e=>{ if(moved){ e.preventDefault(); e.stopPropagation(); } }, true);
+}
+
+window.pick = function(cat){ state.cat=cat; render(true); };
+window.sync = function(k,v){ state[k]=v; };
+window.toggleAnon = function(el){ state.anon=!state.anon; const sw=el.querySelector(".sw"); sw.classList.toggle("off", !state.anon); };
+function updateLikeDOM(id, pop){
+  const card = state.cards.find(c=>c.id===id); if(!card) return;
+  const liked = state.liked.includes(id);
+  document.querySelectorAll('[data-like="'+id+'"]').forEach(btn=>{
+    btn.classList.toggle("off", !liked);
+    const n = btn.querySelector(".n"); if(n) n.textContent = card.likes;
+    if(pop){ const hv = btn.querySelector(".hv"); if(hv){ hv.classList.remove("pop"); void hv.offsetWidth; hv.classList.add("pop"); setTimeout(()=>hv.classList.remove("pop"),420); } }
+  });
+}
+window.like = async function(id){
+  const isL = state.liked.includes(id);
+  const becameLiked = !isL;
+  state.cards = state.cards.map(c=> c.id===id ? Object.assign({},c,{likes:Math.max(0,c.likes+(isL?-1:1))}) : c);
+  state.liked = isL ? state.liked.filter(x=>x!==id) : state.liked.concat(id);
+  if(state.tab==="best"){ state.popId = becameLiked?id:null; render(true); state.popId=null; }
+  else { updateLikeDOM(id, becameLiked); }
+  // 좋아요 기록을 DB에 저장 → 좋아요 숫자는 DB가 자동으로 +1/-1 (모두에게 공유)
+  if(sb){ try{
+    if(becameLiked) await sb.from('card_likes').insert({ card_id:id, user_id:userId });
+    else await sb.from('card_likes').delete().eq('card_id', id).eq('user_id', userId);
+  }catch(e){} }
+};
+window.toggle = function(id){ state.open[id] = !state.open[id]; render(true); };
+window.pickReg = function(c){ state.regCat = c; render(); };
+window.doRegister = async function(){
+  const sit = (document.getElementById("f_sit").value||"").trim();
+  const pr = (document.getElementById("f_pr").value||"").trim();
+  if(!sit || !pr){ toast("상황과 프롬프트를 모두 채워주세요"); return; }
+  state.situation=sit; state.prompt=pr;
+  const btn = document.getElementById("cta"); btn.disabled=true; btn.textContent="AI가 KEY 생성 중…";
+  const r = await classify(sit, pr);
+  r.category = state.regCat;
+  state.preview = r;
+  render();
+};
+window.savePreview = async function(){
+  const p = state.preview;
+  const id = "card_"+Date.now();
+  const author = state.anon ? "익명" : (state.profile.name||"익명");
+  const row = { id, category:p.category, situation:state.situation, prompt:state.prompt,
+    before_text:p.beforeAfter.before, after_text:p.beforeAfter.after, tip:p.tip, key_text:p.key, author, likes:0 };
+  const card = rowToCard(Object.assign({}, row, { created_at:new Date().toISOString() }));
+  state.cards = [card].concat(state.cards);
+  state.mine = [id].concat(state.mine);
+  state.open[id] = true;
+  lsSet(LS_MINE, JSON.stringify(state.mine));
+  if(sb){ try{ await sb.from('cards').insert(row); }catch(e){} }
+  state.situation=""; state.prompt=""; state.preview=null; state.tab="gallery"; state.cat="전체";
+  render(); toast("갤러리에 카드를 올렸어요");
+};
+window.backPreview = function(){ state.preview=null; render(); };
+window.refresh = async function(){
+  await loadData();
+  render(); toast("새로고침했어요");
+};
+
+async function loadData(){
+  // 1) 모두가 공유하는 카드들을 DB에서 불러오기 (최신순)
+  try{
+    if(!sb) throw new Error("no-sb");
+    const { data, error } = await sb.from('cards').select('*').order('created_at', { ascending:false });
+    if(error) throw error;
+    state.cards = (data && data.length) ? data.map(rowToCard) : SEEDS;
+  }catch(e){ state.cards = SEEDS; }
+  // 2) '이 브라우저가' 좋아요한 카드 목록을 DB에서 불러오기
+  try{
+    if(!sb) throw new Error("no-sb");
+    const { data } = await sb.from('card_likes').select('card_id').eq('user_id', userId);
+    state.liked = data ? data.map(x=>x.card_id) : [];
+  }catch(e){ state.liked = []; }
+  // 3) 내 글 목록·프로필은 이 브라우저(로컬)에만 저장
+  state.mine = safeParse(lsGet(LS_MINE)) || [];
+  const pf = safeParse(lsGet(LS_PROFILE));
+  state.profile = pf || Object.assign({}, DEFAULT_PROFILE);
+  dataReady = true;
+}
+
+render();
+loadData();
+</script>
+</body>
+</html>
