@@ -426,11 +426,19 @@ function registerHTML(){
     const p = state.preview;
     return appname()+
       '<button class="ghostback" onclick="backPreview()">‹ 다시 쓰기</button>'+
-      '<div class="aibadge"><span class="d"></span><span class="t">AI가 KEY와 해설을 채웠어요</span></div>'+
+      '<div class="aibadge"><span class="d"></span><span class="t">AI가 채웠어요 · 필요하면 고쳐서 올리세요</span></div>'+
       '<div class="card open" style="cursor:default">'+
       '<div class="crow"><span class="cat">'+esc(p.category)+'</span></div>'+
       '<div class="ctitlerow"><div class="ctitle">'+esc(state.situation)+'</div></div>'+
-      detailsHTML({prompt:state.prompt,beforeAfter:p.beforeAfter,key:p.key,tip:p.tip})+
+      '<div class="pbox">'+esc(state.prompt)+'</div>'+
+      '<div class="field" style="margin-top:4px"><div class="flabel">Before · 이 프롬프트 없이 했을 때</div>'+
+      '<textarea class="ta" id="pv_before" rows="2">'+esc(p.beforeAfter.before)+'</textarea></div>'+
+      '<div class="field"><div class="flabel">After · 이 프롬프트로 얻는 결과</div>'+
+      '<textarea class="ta" id="pv_after" rows="2">'+esc(p.beforeAfter.after)+'</textarea></div>'+
+      '<div class="field"><div class="flabel">KEY · 이 프롬프트가 통하는 이유</div>'+
+      '<textarea class="ta" id="pv_key" rows="2">'+esc(p.key)+'</textarea></div>'+
+      '<div class="field"><div class="flabel">팁 · ♥ 옆에 보이는 문구</div>'+
+      '<textarea class="ta" id="pv_tip" rows="2">'+esc(p.tip)+'</textarea></div>'+
       '</div>'+
       '<button class="cta" onclick="savePreview()">갤러리에 올리기</button>';
   }
@@ -539,6 +547,12 @@ window.saveProfile = async function(){
   const bio=(document.getElementById("pf_bio").value||"").trim();
   state.profile={name,bio}; state.mySub=null;
   lsSet(LS_PROFILE, JSON.stringify(state.profile));
+  // 내가 '실명'으로 올린 카드들의 작성자명을 새 이름으로 갱신 (익명 카드는 그대로)
+  const myRealCards = state.mine.filter(id=>{ const c=state.cards.find(x=>x.id===id); return c && c.author!=="익명"; });
+  if(myRealCards.length){
+    state.cards = state.cards.map(c=> myRealCards.indexOf(c.id)>=0 ? Object.assign({},c,{author:name}) : c);
+    if(sb){ for(const id of myRealCards){ try{ await sb.from('cards').update({author:name}).eq('id', id); }catch(e){} } }
+  }
   render(); toast("프로필을 저장했어요");
 };
 window.editCard = function(id){
@@ -674,10 +688,16 @@ window.doRegister = async function(){
 };
 window.savePreview = async function(){
   const p = state.preview;
+  // 등록자가 미리보기에서 고친 값을 우선 사용 (비우면 AI값 유지)
+  const gv = (id, fb)=>{ const el=document.getElementById(id); const v=el?(el.value||"").trim():""; return v||fb; };
+  const before = gv("pv_before", p.beforeAfter.before);
+  const after  = gv("pv_after",  p.beforeAfter.after);
+  const keyv   = gv("pv_key",    p.key);
+  const tipv   = gv("pv_tip",    p.tip);
   const id = "card_"+Date.now();
   const author = state.anon ? "익명" : (state.profile.name||"익명");
   const row = { id, category:p.category, situation:state.situation, prompt:state.prompt,
-    before_text:p.beforeAfter.before, after_text:p.beforeAfter.after, tip:p.tip, key_text:p.key, author, likes:0 };
+    before_text:before, after_text:after, tip:tipv, key_text:keyv, author, likes:0 };
   const card = rowToCard(Object.assign({}, row, { created_at:new Date().toISOString() }));
   state.cards = [card].concat(state.cards);
   state.mine = [id].concat(state.mine);
